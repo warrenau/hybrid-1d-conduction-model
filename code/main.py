@@ -13,10 +13,10 @@ cp_heatCapacity = 500   # heat capacity in J/kg/K
 alpha_diffusivity = k_conductivity / rho_density / cp_heatCapacity # thermal diffusivity in m^2/s
 
 dt_timeStep = 0.001      # time step in seconds
-dx_cellWidth = 0.001     # cell width in meters
-numCells = 65         # number of cells, should be odd
+dx_cellWidth = 0.0005     # cell width in meters
 x_start = 0
-x_stop = x_start + numCells*dx_cellWidth
+x_stop = 0.0635
+numCells = int((x_stop - x_start)/dx_cellWidth)         # number of cells, should be odd
 
 # pre-allocate arrays
 #x_cellValues = np.arrange(x_start, x_stop, dx_cellWidth)
@@ -28,8 +28,11 @@ T2 = 300                    # temperature at right boundary representing a heat 
 temperature_old = np.ones(numCells) * temperature_initial  # 'old' temperature to be used in loop
 temperature_new = np.ones(numCells) * temperature_initial  # 'new' temperature to be used in loop
 
+heater_numCells = np.floor(heater_diameter/dx_cellWidth)
+heater_indexLeft = int(np.floor(numCells/2)-np.floor(heater_numCells/2))
+heater_indexRight = int(np.floor(numCells/2)+np.floor(heater_numCells/2))
 qdot_heatGenerationRate = np.zeros(numCells)               # volumetric heat generation rate array, will only have one non-zero value
-qdot_heatGenerationRate[int(np.ceil(numCells/2))] = heater_flux / dx_cellWidth   # heater power converted to volumetric heat generation rate
+qdot_heatGenerationRate[heater_indexLeft:heater_indexRight] = heater_power/(np.pi * heater_diameter**2/4 * heater_length)   # heater power converted to volumetric heat generation rate
 
 
 # loop constants
@@ -56,7 +59,7 @@ while err > tol and num_iterations < max_iterations:
         print("Maximum iterations reached: ",num_iterations)
 
 # analytical solution
-x = np.linspace(x_start, x_stop/2, numCells)
+x = x_cellValues[0:heater_indexLeft-1]
 T = heater_flux / k_conductivity * x + T1
 
 
