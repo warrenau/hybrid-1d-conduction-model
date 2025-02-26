@@ -6,7 +6,8 @@ from matplotlib import pyplot as plt
 heater_power = 500  # heater power in watts
 heater_diameter = 0.375 * 25.4 / 1000
 heater_length = 6 * 25.4 / 1000
-heater_flux = heater_power / (np.pi * heater_diameter * heater_length)
+heater_volumetric = 4*heater_power / (np.pi * heater_diameter**2 * heater_length)
+heater_flux = 2*heater_power / (np.pi * heater_diameter * heater_length)
 k_conductivity = 16.2   # thermal conductivity in W/m/K
 rho_density = 7930      # density in kg/m^3
 cp_heatCapacity = 500   # heat capacity in J/kg/K
@@ -32,7 +33,7 @@ heater_numCells = np.floor(heater_diameter/dx_cellWidth)
 heater_indexLeft = int(np.floor(numCells/2)-np.floor(heater_numCells/2))
 heater_indexRight = int(np.floor(numCells/2)+np.floor(heater_numCells/2))
 qdot_heatGenerationRate = np.zeros(numCells)               # volumetric heat generation rate array, will only have one non-zero value
-qdot_heatGenerationRate[heater_indexLeft:heater_indexRight] = heater_power/(np.pi * heater_diameter**2/4 * heater_length)   # heater power converted to volumetric heat generation rate
+qdot_heatGenerationRate[heater_indexLeft:heater_indexRight] = heater_volumetric   # heater power converted to volumetric heat generation rate
 
 
 # loop constants
@@ -51,10 +52,10 @@ while err > tol and num_iterations < max_iterations:
         else:
             temperature_new[cell] = alpha_diffusivity*dt_timeStep/k_conductivity*qdot_heatGenerationRate[cell] + alpha_diffusivity*dt_timeStep/(dx_cellWidth**2)*temperature_old[cell+1] + (1-(2*alpha_diffusivity*dt_timeStep/(dx_cellWidth**2)))*temperature_old[cell] + alpha_diffusivity*dt_timeStep/(dx_cellWidth**2)*temperature_old[cell-1]
     err = np.max(np.abs(temperature_new - temperature_old))
-#    print(err)
+    if err <= tol:
+        print("iterations:", num_iterations)
     temperature_old[:] = temperature_new[:]
     num_iterations += 1
-#    print(num_iterations)
     if num_iterations >= max_iterations:
         print("Maximum iterations reached: ",num_iterations)
 
